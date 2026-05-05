@@ -67,7 +67,12 @@ export const logout = catchAsync(async (req: Request, res: Response) => {
 export const forgotPassword = catchAsync(async (req: Request, res: Response) => {
   const { email } = forgotPasswordSchema.parse(req.body);
   await authService.forgotPassword(email);
-  sendSuccess(res, 200, null, "A temporary password has been sent to your email.");
+  sendSuccess(
+    res,
+    200,
+    null,
+    "If an account exists for this email, a temporary password will be sent."
+  );
 });
 
 export const changePassword = catchAsync(async (req: Request, res: Response) => {

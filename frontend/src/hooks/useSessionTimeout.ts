@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { refreshClient } from "../lib/axios";
 import { useAppDispatch, useAppSelector } from "../app/hooks";
 import { logout, setAuthenticated } from "../features/auth/authSlice";
+import { clearAuthSessionHint, setAuthSessionHint } from "../features/auth/sessionHint";
 import { useNavigate } from "react-router-dom";
 
 const WARNING_BEFORE_EXPIRE_MS = 2 * 60 * 1000;
@@ -30,9 +31,11 @@ export function useSessionTimeout() {
     try {
       const { data } = await refreshClient.post<{ expiresIn: number }>("/auth/refresh");
       dispatch(setAuthenticated({ expiresIn: data.expiresIn }));
+      setAuthSessionHint();
       setOpenModal(false);
     } catch {
       dispatch(logout());
+      clearAuthSessionHint();
       navigate("/signin?reason=session-expired", { replace: true });
     }
   };
@@ -42,6 +45,7 @@ export function useSessionTimeout() {
       await refreshClient.post("/auth/logout");
     } finally {
       dispatch(logout());
+      clearAuthSessionHint();
       navigate("/signin", { replace: true });
     }
   };

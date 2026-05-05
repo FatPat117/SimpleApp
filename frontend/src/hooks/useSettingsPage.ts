@@ -7,6 +7,7 @@ import { useAppDispatch } from "../app/hooks";
 import { useToast } from "../components/shared/ToastProvider";
 import { useChangePassword } from "../features/auth/authApi";
 import { logout } from "../features/auth/authSlice";
+import { clearAuthSessionHint } from "../features/auth/sessionHint";
 import { setProfile } from "../features/user/userSlice";
 import { changePasswordSchema, type ChangePasswordFormValues } from "../schemas/forgotPasswordSchema";
 
@@ -32,6 +33,7 @@ export function useSettingsPage() {
     try {
       await changePassword.mutateAsync(values.newPassword);
       dispatch(logout());
+      clearAuthSessionHint();
       dispatch(setProfile(null));
       pushToast("Password changed successfully. Please sign in again.", "success");
       navigate("/signin", { replace: true });

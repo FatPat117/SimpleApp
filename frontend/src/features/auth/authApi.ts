@@ -49,12 +49,13 @@ export const useChangePassword = () =>
     },
   });
 
-export const useMe = () =>
+export const useMe = (enabled = true) =>
   useQuery({
     queryKey: ["me"],
     queryFn: async () => {
       const { data } = await api.get<ApiSuccessResponse<{ user: UserProfile }>>("/users/me");
       return data.data.user;
     },
+    enabled,
     retry: false,
   });

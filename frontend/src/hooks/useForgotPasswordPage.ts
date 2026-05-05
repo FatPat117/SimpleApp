@@ -1,11 +1,13 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
+import { useNavigate } from "react-router-dom";
 import { useToast } from "../components/shared/ToastProvider";
 import { useForgotPassword } from "../features/auth/authApi";
 import { forgotPasswordSchema, type ForgotPasswordFormValues } from "../schemas/forgotPasswordSchema";
 
 export function useForgotPasswordPage() {
   const forgotPassword = useForgotPassword();
+  const navigate = useNavigate();
   const { pushToast } = useToast();
   const {
     register,
@@ -18,7 +20,8 @@ export function useForgotPasswordPage() {
 
   const onSubmit = async (values: ForgotPasswordFormValues) => {
     await forgotPassword.mutateAsync(values.email);
-    pushToast("A temporary password has been sent to your email.", "success");
+    pushToast("If this email exists, a temporary password will be sent.", "success");
+    navigate("/signin", { replace: true });
   };
 
   return {

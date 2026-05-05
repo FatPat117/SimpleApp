@@ -7,14 +7,13 @@ export function AuthLayout() {
   const isAuthenticated = useAppSelector((state) => state.auth.isAuthenticated);
   const user = useAppSelector((state) => state.auth.user);
   const isChangePasswordRoute = location.pathname === "/change-password";
+  const canAccessForcedPasswordChange = isAuthenticated && Boolean(user?.requiresPasswordChange) && isChangePasswordRoute;
 
-  if (isAuthenticated) {
-    if (user?.requiresPasswordChange) {
-      if (isChangePasswordRoute) {
-        return <Outlet />;
-      }
-      return <Navigate to="/change-password" replace />;
-    }
+  if (isAuthenticated && user?.requiresPasswordChange && !isChangePasswordRoute) {
+    return <Navigate to="/change-password" replace />;
+  }
+
+  if (isAuthenticated && !canAccessForcedPasswordChange) {
     return <Navigate to="/dashboard" replace />;
   }
 

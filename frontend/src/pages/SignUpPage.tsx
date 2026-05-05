@@ -9,7 +9,7 @@ import { useSignUpPage } from "../hooks/useSignUpPage";
 
 export function SignUpPage() {
   const { isPending, submit, form } = useSignUpPage();
-  const { register, errors, password, showPasswordStrength } = form;
+  const { register, errors, password, showPasswordStrength, validateAvailability } = form;
 
   return (
     <FormPageShell
@@ -33,7 +33,7 @@ export function SignUpPage() {
       <FormTextInput
         id="signup-username"
         label="Name"
-        {...register("username")}
+        {...register("username", { onBlur: () => void validateAvailability("username") })}
         placeholder="Name"
         error={errors.username?.message}
         errorClassName="error min-h-2"
@@ -41,7 +41,7 @@ export function SignUpPage() {
       <FormTextInput
         id="signup-email"
         label="Email"
-        {...register("email")}
+        {...register("email", { onBlur: () => void validateAvailability("email") })}
         placeholder="Email"
         error={errors.email?.message}
         errorClassName="error min-h-2"

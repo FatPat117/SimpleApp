@@ -7,6 +7,7 @@ import { useAppDispatch } from "../app/hooks";
 import { useToast } from "../components/shared/ToastProvider";
 import { useLogin } from "../features/auth/authApi";
 import { setAuthenticated, setUser } from "../features/auth/authSlice";
+import { setAuthSessionHint } from "../features/auth/sessionHint";
 import { setProfile } from "../features/user/userSlice";
 import { signInSchema, type SignInFormValues } from "../schemas/signInSchema";
 
@@ -52,8 +53,9 @@ export function useSignInPage() {
       dispatch(setAuthenticated({ expiresIn: response.expiresIn }));
       dispatch(setUser(response.user));
       dispatch(setProfile(response.user));
+      setAuthSessionHint();
       pushToast("Signed in successfully.", "success");
-      navigate("/dashboard", { replace: true });
+      navigate(response.user.requiresPasswordChange ? "/change-password" : "/dashboard", { replace: true });
     } catch (error) {
       const axiosError = error as AxiosError<{ message?: string }>;
       const message = axiosError.response?.data?.message;

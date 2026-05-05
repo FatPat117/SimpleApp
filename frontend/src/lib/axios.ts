@@ -1,6 +1,7 @@
 import axios, { type AxiosError, type InternalAxiosRequestConfig } from "axios";
 import { store } from "../app/store";
 import { logout, setAuthenticated } from "../features/auth/authSlice";
+import { clearAuthSessionHint, hasAuthSessionHint, setAuthSessionHint } from "../features/auth/sessionHint";
 
 type ViteImportMeta = ImportMeta & {
   env?: {
@@ -39,6 +40,9 @@ api.interceptors.response.use(
     if (error.response?.status !== 401 || !originalRequest || originalRequest._retry) {
       return Promise.reject(error);
     }
+    if (!hasAuthSessionHint()) {
+      return Promise.reject(error);
+    }
 
     originalRequest._retry = true;
 
@@ -54,10 +58,12 @@ api.interceptors.response.use(
     try {
       const { data } = await refreshClient.post<{ expiresIn: number }>("/auth/refresh");
       store.dispatch(setAuthenticated({ expiresIn: data.expiresIn }));
+      setAuthSessionHint();
       flushQueue();
       return api(originalRequest);
     } catch (refreshError) {
       store.dispatch(logout());
+      clearAuthSessionHint();
       if (window.location.pathname !== "/signin") {
         window.location.href = "/signin?reason=session-expired";
       }

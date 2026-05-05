@@ -1,6 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { AxiosError } from "axios";
-import { useEffect, useRef } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "../components/shared/ToastProvider";
@@ -15,6 +14,7 @@ export function useSignUpPage() {
     register,
     handleSubmit,
     control,
+    getValues,
     setError,
     clearErrors,
     formState: { errors },
@@ -24,66 +24,55 @@ export function useSignUpPage() {
     mode: "onBlur",
   });
   const password = useWatch({ control, name: "password" });
-  const username = useWatch({ control, name: "username" });
-  const email = useWatch({ control, name: "email" });
   const showPasswordStrength = Boolean(password);
-  const availabilityRequestIdRef = useRef(0);
 
-  useEffect(() => {
-    const normalizedUsername = username?.trim() ?? "";
-    const normalizedEmail = email?.trim().toLowerCase() ?? "";
-
-    if (normalizedUsername.length > 0 && normalizedUsername.length < 3) {
-      return;
-    }
-
-    const isValidEmail = normalizedEmail.length === 0 || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail);
-    if (!isValidEmail) {
-      return;
-    }
-
-    if (!normalizedUsername && !normalizedEmail) {
-      return;
-    }
-
-    const timeoutId = window.setTimeout(async () => {
-      const requestId = availabilityRequestIdRef.current + 1;
-      availabilityRequestIdRef.current = requestId;
-
+  const validateAvailability = async (field: "username" | "email") => {
+    if (field === "username") {
+      const normalizedUsername = getValues("username")?.trim() ?? "";
+      if (!normalizedUsername) {
+        if (errors.username?.type === "server") {
+          clearErrors("username");
+        }
+        return;
+      }
+      if (normalizedUsername.length < 3) {
+        return;
+      }
       try {
-        const result = await checkSignupAvailability({
-          ...(normalizedUsername ? { username: normalizedUsername } : {}),
-          ...(normalizedEmail ? { email: normalizedEmail } : {}),
-        });
-
-        if (availabilityRequestIdRef.current !== requestId) {
-          return;
-        }
-
-        if (normalizedEmail) {
-          if (result.emailInUse) {
-            setError("email", { type: "server", message: "Email already in use." });
-          } else if (errors.email?.type === "server") {
-            clearErrors("email");
-          }
-        }
-
-        if (normalizedUsername) {
-          if (result.usernameInUse) {
-            setError("username", { type: "server", message: "Username already in use." });
-          } else if (errors.username?.type === "server") {
-            clearErrors("username");
-          }
+        const result = await checkSignupAvailability({ username: normalizedUsername });
+        if (result.usernameInUse) {
+          setError("username", { type: "server", message: "Username already in use." });
+        } else if (errors.username?.type === "server") {
+          clearErrors("username");
         }
       } catch {
         // Skip inline availability errors; submit still validates on server.
       }
-    }, 450);
+      return;
+    }
 
-    return () => {
-      window.clearTimeout(timeoutId);
-    };
-  }, [username, email, setError, clearErrors, errors.email?.type, errors.username?.type]);
+    const normalizedEmail = getValues("email")?.trim().toLowerCase() ?? "";
+    if (!normalizedEmail) {
+      if (errors.email?.type === "server") {
+        clearErrors("email");
+      }
+      return;
+    }
+    const isValidEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail);
+    if (!isValidEmail) {
+      return;
+    }
+    try {
+      const result = await checkSignupAvailability({ email: normalizedEmail });
+      if (result.emailInUse) {
+        setError("email", { type: "server", message: "Email already in use." });
+      } else if (errors.email?.type === "server") {
+        clearErrors("email");
+      }
+    } catch {
+      // Skip inline availability errors; submit still validates on server.
+    }
+  };
 
   const onSubmit = async (values: SignUpFormValues) => {
     try {
@@ -117,6 +106,7 @@ export function useSignUpPage() {
       errors,
       password,
       showPasswordStrength,
+      validateAvailability,
     },
   };
 }
