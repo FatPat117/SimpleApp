@@ -3,7 +3,7 @@ import { mailTransporter } from "../config/mailer";
 
 export const mailService = {
   async sendVerificationEmail(recipientEmail: string, verificationToken: string): Promise<void> {
-    const verificationUrl = `${env.FRONTEND_URL}/verify-email?token=${verificationToken}`;
+    const verificationUrl = `${env.BACKEND_URL}/api/auth/verify-email?token=${verificationToken}`;
     await mailTransporter.sendMail({
       from: env.SMTP_FROM,
       to: recipientEmail,
