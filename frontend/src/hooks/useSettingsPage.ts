@@ -1,6 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { AxiosError } from "axios";
-import type { FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { useForm, useWatch } from "react-hook-form";
 import { useAppDispatch } from "../app/hooks";
@@ -28,8 +27,7 @@ export function useSettingsPage() {
   const newPassword = useWatch({ control, name: "newPassword" });
   const showPasswordStrength = Boolean(newPassword);
 
-  const onSubmit = async (values: ChangePasswordFormValues, event?: FormEvent<HTMLFormElement>) => {
-    event?.preventDefault();
+  const onSubmit = async (values: ChangePasswordFormValues) => {
     try {
       await changePassword.mutateAsync(values.newPassword);
       dispatch(logout());
