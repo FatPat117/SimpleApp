@@ -1,3 +1,4 @@
+/** Ký/verify JWT user (access, refresh, verify-mail) → lỗi JWT thành AppError. */
 import jwt, { JsonWebTokenError, TokenExpiredError, type JwtPayload, type SignOptions } from "jsonwebtoken";
 import type { UserTokenPayload } from "../types/auth.types";
 import { AppError } from "./AppError";

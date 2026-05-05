@@ -1,3 +1,4 @@
+/** Express async handler: `reject` → `next(err)` (vào errorHandler). */
 import type { NextFunction, Request, Response } from "express";
 
 type AsyncHandler = (req: Request, res: Response, next: NextFunction) => Promise<unknown>;

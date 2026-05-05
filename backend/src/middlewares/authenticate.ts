@@ -1,3 +1,4 @@
+/** Đọc access JWT từ cookie → `req.user` hoặc 401. */
 import type { NextFunction, Request, Response } from "express";
 import { tokenService } from "../services/token.service";
 import { AppError } from "../utils/AppError";

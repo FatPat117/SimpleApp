@@ -1,3 +1,4 @@
+/** Express stack: security, CORS, body, Swagger `/api/docs`, routes, 404, error. */
 import cookieParser from "cookie-parser";
 import cors from "cors";
 import express from "express";
@@ -13,6 +14,7 @@ const swaggerUi = require("swagger-ui-express");
 
 export const app = express();
 
+// Proxy trước app (nginx, LB): để Express lấy đúng IP client khi rate limit.
 app.set("trust proxy", 1);
 app.disable("x-powered-by");
 
@@ -31,6 +33,7 @@ app.use(express.json({ limit: "16kb" }));
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
+// Swagger UI inline script CSP xung đột Helmet → tắt CSP riêng cho /api/docs.
 const docsHelmet = helmet({ contentSecurityPolicy: false });
 app.use(
   "/api/docs",

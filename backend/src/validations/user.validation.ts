@@ -1,3 +1,4 @@
+/** PATCH /me: validate body, bắt buộc ít nhất một field. */
 import { z } from "zod";
 
 export const updateMeSchema = z

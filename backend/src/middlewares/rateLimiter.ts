@@ -1,3 +1,4 @@
+/** Giới hạn request theo IP: toàn `/api`, auth, refresh, forgot-password. */
 import rateLimit from "express-rate-limit";
 import { sendError } from "../utils/response";
 

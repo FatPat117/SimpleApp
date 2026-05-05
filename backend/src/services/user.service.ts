@@ -1,3 +1,4 @@
+/** Đọc user theo id; cập nhật profile (username unique). */
 import { Op } from "sequelize";
 import { User } from "../models/user.model";
 import { AppError } from "../utils/AppError";

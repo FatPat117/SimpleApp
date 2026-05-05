@@ -1,5 +1,6 @@
-import type { Response } from "express";
+/** JWT + cookie HttpOnly: ký, verify theo purpose, set/clear auth cookies. */
 import type { JwtPayload } from "jsonwebtoken";
+import type { Response } from "express";
 import { env } from "../config/env";
 import { ACCESS_COOKIE_NAME, REFRESH_COOKIE_NAME } from "../constants/auth.constants";
 import type { UserTokenPayload } from "../types/auth.types";

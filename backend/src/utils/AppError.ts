@@ -1,3 +1,4 @@
+/** Lỗi điều khiển được: status HTTP + `code` cho client. */
 export class AppError extends Error {
   public readonly statusCode: number;
   public readonly isOperational: boolean;

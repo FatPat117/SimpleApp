@@ -1,3 +1,4 @@
+/** `15m` / `7d` / `2h` trong env → số giây (cookie maxAge). */
 export const parseJwtExpiryToSeconds = (value: string): number => {
   const unit = value.slice(-1);
   const amount = Number(value.slice(0, -1));

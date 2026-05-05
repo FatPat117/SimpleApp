@@ -1,5 +1,12 @@
+/** Gửi mail (nodemailer); HTML trong `emails/templates`. */
 import { env } from "../config/env";
 import { mailTransporter } from "../config/mailer";
+import {
+  buildTemporaryPasswordEmailHtml,
+  buildVerificationEmailHtml,
+  temporaryPasswordEmailSubject,
+  verificationEmailSubject
+} from "../emails/templates";
 
 export const mailService = {
   async sendVerificationEmail(recipientEmail: string, verificationToken: string): Promise<void> {
@@ -7,13 +14,8 @@ export const mailService = {
     await mailTransporter.sendMail({
       from: env.SMTP_FROM,
       to: recipientEmail,
-      subject: "Verify your email address",
-      html: `
-        <h2>Welcome to SimpleApp</h2>
-        <p>Please verify your email by clicking the link below:</p>
-        <a href="${verificationUrl}" target="_blank" rel="noopener noreferrer">Verify email</a>
-        <p>This link will expire in 24 hours.</p>
-      `
+      subject: verificationEmailSubject,
+      html: buildVerificationEmailHtml(verificationUrl)
     });
   },
 
@@ -21,13 +23,8 @@ export const mailService = {
     await mailTransporter.sendMail({
       from: env.SMTP_FROM,
       to: recipientEmail,
-      subject: "Your temporary password",
-      html: `
-        <h2>Temporary password request</h2>
-        <p>Your temporary password is:</p>
-        <p><strong>${temporaryPassword}</strong></p>
-        <p>Please sign in and change your password immediately.</p>
-      `
+      subject: temporaryPasswordEmailSubject,
+      html: buildTemporaryPasswordEmailHtml(temporaryPassword)
     });
   }
 };

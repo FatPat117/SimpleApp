@@ -1,33 +1,12 @@
 import { env } from "../config/env";
 
-/**
- * OpenAPI 3.0 specification for SimpleApp backend.
- * Served at GET /api/docs (Swagger UI).
- */
+/** Swagger `/api/docs` — chỉnh khi đổi contract API. */
 export const openApiSpec = {
   openapi: "3.0.3",
   info: {
     title: "SimpleApp Auth API",
-    description: [
-      "Full-stack auth backend: JWT access + refresh in **HttpOnly cookies**, email verification,",
-      "forgot password (temporary password), Google OAuth, and user profile.",
-      "",
-      "### Response format",
-      "- **Success:** `{ success: true, message?: string, data: ... }`",
-      "- **Error:** `{ success: false, error: { code, message, details? } }`",
-      "",
-      "### Cookies (never returned in JSON)",
-      "- `accessToken` — short-lived JWT (HttpOnly)",
-      "- `refreshToken` — long-lived JWT (HttpOnly), rotated on `POST /auth/refresh`",
-      "",
-      "### Swagger “Try it out”",
-      "Enable **credentials** in your browser for same-site requests. After `login` or `refresh`,",
-      "cookies are set automatically; protected routes use the `accessToken` cookie.",
-      "",
-      "### Rate limits",
-      "- Auth-heavy routes (`signup`, `login`) are stricter than general `/api` traffic.",
-      "- `refresh` and `forgot-password` have dedicated limits."
-    ].join("\n"),
+    description:
+      "Authentication API with JWT cookies, email verification, forgot-password flow, Google OAuth, and current-user profile endpoints.",
     version: "1.0.0",
     contact: {
       name: "SimpleApp"

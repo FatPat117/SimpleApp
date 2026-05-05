@@ -1,3 +1,4 @@
+/** Hằng auth: tên cookie, bcrypt, giới hạn username, URL Google (không chứa secret). */
 export const ACCESS_COOKIE_NAME = "accessToken";
 export const REFRESH_COOKIE_NAME = "refreshToken";
 

@@ -1,3 +1,4 @@
+/** Type dùng chung: JWT payload, response login, DTO Google. */
 export type TokenPurpose = "access" | "refresh" | "email-verification";
 
 export type UserTokenPayload = {
@@ -7,7 +8,7 @@ export type UserTokenPayload = {
   purpose: TokenPurpose;
 };
 
-/** Public user fields returned on login / refresh (no secrets). */
+/** User public (login/refresh) — không secrets. */
 export type AuthUserPublic = {
   id: string;
   username: string;

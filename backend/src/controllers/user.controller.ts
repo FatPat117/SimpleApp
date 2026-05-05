@@ -1,3 +1,4 @@
+/** HTTP /users/me: profile user đang login (không lộ password/hash). */
 import type { Request, Response } from "express";
 import { userService } from "../services/user.service";
 import { AppError } from "../utils/AppError";

@@ -1,3 +1,4 @@
+/** Mount các handler auth + rate limit riêng từng nhóm endpoint. */
 import { Router } from "express";
 import {
   changePassword,

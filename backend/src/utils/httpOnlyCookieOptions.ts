@@ -1,3 +1,4 @@
+/** Base options cho cookie auth (HttpOnly, SameSite=strict, Secure khi prod). */
 import { env } from "../config/env";
 
 export const getHttpOnlyCookieBaseOptions = (): {

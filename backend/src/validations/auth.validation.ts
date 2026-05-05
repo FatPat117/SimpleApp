@@ -1,3 +1,4 @@
+/** Schema Zod cho body/query auth (password rule dùng chung signup + change). */
 import { z } from "zod";
 
 const passwordSchema = z

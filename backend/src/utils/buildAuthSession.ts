@@ -1,5 +1,6 @@
-import type { User } from "../models/user.model";
+/** Từ `User` → cặp access/refresh JWT + `{ expiresIn, user }` gửi client (cookie set ở controller). */
 import { tokenService } from "../services/token.service";
+import type { User } from "../models/user.model";
 import type { AuthResponse } from "../types/auth.types";
 
 export const buildAuthResponse = (user: User): AuthResponse => {

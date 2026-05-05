@@ -1,3 +1,4 @@
+/** Slug username + đảm bảo unique trong DB (signup Google). */
 import {
     DEFAULT_USERNAME_FALLBACK,
     USERNAME_DB_MAX_LEN,

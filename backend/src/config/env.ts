@@ -1,3 +1,4 @@
+/** `.env` qua Zod — fail fast nếu thiếu/sai biến. */
 import dotenv from "dotenv";
 import { z } from "zod";
 

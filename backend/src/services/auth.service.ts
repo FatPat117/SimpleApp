@@ -1,3 +1,4 @@
+/** Auth domain: signup/verify/login, refresh + reuse, Google, forgot/change password. */
 import bcrypt from "bcrypt";
 import { Op } from "sequelize";
 import { googleOAuthClient } from "../clients/google-oauth.client";
@@ -48,10 +49,35 @@ export const authService = {
   },
 
   async verifyEmail(token: string): Promise<void> {
-    const payload = tokenService.verifyEmailVerificationToken(token);
+    let payload;
+    try {
+      payload = tokenService.verifyEmailVerificationToken(token);
+    } catch (error) {
+      if (error instanceof AppError && error.code === "TOKEN_EXPIRED") {
+        throw new AppError("Verification link expired", 400, "VERIFICATION_TOKEN_EXPIRED");
+      }
+      throw error;
+    }
+
     const user = await User.findByPk(payload.sub);
-    if (!user || user.emailVerificationToken !== token) {
-      throw new AppError("Invalid verification token", 400);
+    if (!user) {
+      throw new AppError("User not found for this verification token", 404, "VERIFICATION_USER_NOT_FOUND");
+    }
+
+    if (user.isEmailVerified) {
+      throw new AppError("Email is already verified", 409, "EMAIL_ALREADY_VERIFIED");
+    }
+
+    if (!user.emailVerificationToken) {
+      throw new AppError(
+        "No active verification token for this account",
+        400,
+        "VERIFICATION_TOKEN_NOT_ACTIVE"
+      );
+    }
+
+    if (user.emailVerificationToken !== token) {
+      throw new AppError("Verification token mismatch", 400, "VERIFICATION_TOKEN_MISMATCH");
     }
 
     user.isEmailVerified = true;
@@ -94,6 +120,7 @@ export const authService = {
     }
 
     const isCurrentToken = await bcrypt.compare(refreshToken, user.refreshTokenHash);
+    // Refresh token cũ sau khi đã rotate → có thể bị reuse → huỷ session.
     if (!isCurrentToken) {
       user.refreshTokenHash = null;
       await user.save();
@@ -118,6 +145,7 @@ export const authService = {
 
   async forgotPassword(email: string): Promise<void> {
     const user = await User.findOne({ where: { email } });
+    // Không có user vẫn im lặng — tránh lộ email có tài khoản hay không.
     if (!user) {
       return;
     }

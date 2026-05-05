@@ -1,3 +1,4 @@
+/** Bảng `users`: password local / Google, verify email, refresh hash, MK tạm. */
 import {
     DataTypes,
     Model,

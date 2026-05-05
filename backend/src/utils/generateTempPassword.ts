@@ -1,3 +1,4 @@
+/** MK tạm forgot-password: random + hậu tố để luôn có A và ký tự đặc biệt. */
 import { randomBytes } from "crypto";
 
 export const generateTempPassword = (length = 12): string => {

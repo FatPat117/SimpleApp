@@ -1,3 +1,4 @@
+/** Envelope JSON thống nhất cho frontend: success / error. */
 import type { Response } from "express";
 
 export const sendSuccess = <T>(

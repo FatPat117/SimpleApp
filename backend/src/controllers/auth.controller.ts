@@ -1,3 +1,4 @@
+/** HTTP auth: validate → service → set cookie + `sendSuccess`. */
 import type { Request, Response } from "express";
 import { env } from "../config/env";
 import { authService } from "../services/auth.service";
