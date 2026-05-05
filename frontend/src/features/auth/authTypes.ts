@@ -9,6 +9,7 @@ export interface AuthUser {
 
 export interface AuthState {
   isAuthenticated: boolean;
+  isAuthChecked: boolean;
   accessTokenExpiresAt: number | null;
   user: AuthUser | null;
 }
