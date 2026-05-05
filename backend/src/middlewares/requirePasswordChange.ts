@@ -1,6 +1,6 @@
 import type { NextFunction, Request, Response } from "express";
-import { AppError } from "../utils/AppError";
 import { User } from "../models/user.model";
+import { AppError } from "../utils/AppError";
 
 export const requirePasswordChange = async (
   req: Request,

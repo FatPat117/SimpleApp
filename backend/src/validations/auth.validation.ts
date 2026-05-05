@@ -28,3 +28,7 @@ export const changePasswordSchema = z.object({
 export const verifyEmailSchema = z.object({
   token: z.string().min(1, "Missing token")
 });
+
+export const googleCallbackSchema = z.object({
+  code: z.string().min(1, "Missing authorization code")
+});

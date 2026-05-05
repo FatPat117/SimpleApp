@@ -1,27 +1,34 @@
 import type { NextFunction, Request, Response } from "express";
 import { ZodError } from "zod";
+import { env } from "../config/env";
 import { AppError } from "../utils/AppError";
+import { sendError } from "../utils/response";
 
 export const errorHandler = (error: Error, _req: Request, res: Response, _next: NextFunction): void => {
   if (error instanceof ZodError) {
-    res.status(400).json({
-      message: "Validation failed",
-      errors: error.issues.map((issue) => ({
+    sendError(
+      res,
+      400,
+      "VALIDATION_ERROR",
+      "Validation failed",
+      error.issues.map((issue) => ({
         path: issue.path.join("."),
         message: issue.message
       }))
-    });
+    );
     return;
   }
 
   if (error instanceof AppError) {
-    res.status(error.statusCode).json({
-      message: error.message
-    });
+    sendError(res, error.statusCode, error.code, error.message, error.details);
     return;
   }
 
-  res.status(500).json({
-    message: "Internal server error"
-  });
+  sendError(
+    res,
+    500,
+    "INTERNAL_SERVER_ERROR",
+    "Internal server error",
+    env.NODE_ENV === "development" ? { stack: error.stack } : undefined
+  );
 };

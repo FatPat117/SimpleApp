@@ -1,10 +1,14 @@
 import type { Request, Response } from "express";
+import { env } from "../config/env";
 import { authService } from "../services/auth.service";
 import { tokenService } from "../services/token.service";
+import { AppError } from "../utils/AppError";
 import { catchAsync } from "../utils/catchAsync";
+import { sendSuccess } from "../utils/response";
 import {
   changePasswordSchema,
   forgotPasswordSchema,
+  googleCallbackSchema,
   loginSchema,
   signUpSchema,
   verifyEmailSchema
@@ -13,40 +17,36 @@ import {
 export const signup = catchAsync(async (req: Request, res: Response) => {
   const payload = signUpSchema.parse(req.body);
   await authService.signup(payload);
-  res.status(201).json({
-    message: "Please check your email to verify your account before logging in."
-  });
+  sendSuccess(
+    res,
+    201,
+    { email: payload.email },
+    "Please check your email to verify your account before logging in."
+  );
 });
 
 export const verifyEmail = catchAsync(async (req: Request, res: Response) => {
   const { token } = verifyEmailSchema.parse(req.query);
   await authService.verifyEmail(token);
-  res.status(200).json({ message: "Email verified successfully" });
+  sendSuccess(res, 200, null, "Email verified successfully");
 });
 
 export const login = catchAsync(async (req: Request, res: Response) => {
   const payload = loginSchema.parse(req.body);
   const result = await authService.login(payload);
   tokenService.setAuthCookies(res, result.accessToken, result.refreshToken);
-  res.status(200).json({
-    expiresIn: result.expiresIn,
-    user: result.user
-  });
+  sendSuccess(res, 200, { expiresIn: result.expiresIn, user: result.user });
 });
 
 export const refresh = catchAsync(async (req: Request, res: Response) => {
   const refreshToken = req.cookies?.[tokenService.refreshCookieName] as string | undefined;
   if (!refreshToken) {
-    res.status(401).json({ message: "Refresh token missing" });
-    return;
+    throw new AppError("Refresh token missing", 401, "REFRESH_TOKEN_MISSING");
   }
 
   const result = await authService.refresh(refreshToken);
   tokenService.setAuthCookies(res, result.accessToken, result.refreshToken);
-  res.status(200).json({
-    expiresIn: result.expiresIn,
-    user: result.user
-  });
+  sendSuccess(res, 200, { expiresIn: result.expiresIn, user: result.user });
 });
 
 export const logout = catchAsync(async (req: Request, res: Response) => {
@@ -54,31 +54,34 @@ export const logout = catchAsync(async (req: Request, res: Response) => {
     await authService.logout(req.user.id);
   }
   tokenService.clearAuthCookies(res);
-  res.status(200).json({ message: "Logged out successfully" });
+  sendSuccess(res, 200, null, "Logged out successfully");
 });
 
 export const forgotPassword = catchAsync(async (req: Request, res: Response) => {
   const { email } = forgotPasswordSchema.parse(req.body);
   await authService.forgotPassword(email);
-  res.status(200).json({ message: "A temporary password has been sent to your email." });
+  sendSuccess(res, 200, null, "A temporary password has been sent to your email.");
 });
 
 export const changePassword = catchAsync(async (req: Request, res: Response) => {
   const { newPassword } = changePasswordSchema.parse(req.body);
   if (!req.user) {
-    res.status(401).json({ message: "Authentication required" });
-    return;
+    throw new AppError("Authentication required", 401, "AUTHENTICATION_REQUIRED");
   }
 
   await authService.changePassword(req.user.id, newPassword);
   tokenService.clearAuthCookies(res);
-  res.status(200).json({ message: "Password changed successfully. Please sign in again." });
+  sendSuccess(res, 200, null, "Password changed successfully. Please sign in again.");
 });
 
 export const googleAuth = catchAsync(async (_req: Request, res: Response) => {
-  res.status(501).json({ message: "Google OAuth is not implemented yet" });
+  const authorizationUrl = authService.getGoogleAuthorizationUrl();
+  res.redirect(authorizationUrl);
 });
 
-export const googleCallback = catchAsync(async (_req: Request, res: Response) => {
-  res.status(501).json({ message: "Google OAuth callback is not implemented yet" });
+export const googleCallback = catchAsync(async (req: Request, res: Response) => {
+  const { code } = googleCallbackSchema.parse(req.query);
+  const result = await authService.loginWithGoogleCode(code);
+  tokenService.setAuthCookies(res, result.accessToken, result.refreshToken);
+  res.redirect(`${env.FRONTEND_URL}/dashboard`);
 });

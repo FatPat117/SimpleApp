@@ -17,7 +17,10 @@ const envSchema = z.object({
   SMTP_PORT: z.coerce.number().int().positive(),
   SMTP_USER: z.string().min(1),
   SMTP_PASS: z.string().min(1),
-  SMTP_FROM: z.string().email()
+  SMTP_FROM: z.string().email(),
+  GOOGLE_CLIENT_ID: z.string().default(""),
+  GOOGLE_CLIENT_SECRET: z.string().default(""),
+  GOOGLE_REDIRECT_URI: z.string().url()
 });
 
 const parsedEnv = envSchema.safeParse(process.env);
