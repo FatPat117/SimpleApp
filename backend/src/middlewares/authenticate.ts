@@ -1,0 +1,18 @@
+import type { NextFunction, Request, Response } from "express";
+import { AppError } from "../utils/AppError";
+import { tokenService } from "../services/token.service";
+
+export const authenticate = (req: Request, _res: Response, next: NextFunction): void => {
+  const accessToken = req.cookies?.[tokenService.accessCookieName] as string | undefined;
+  if (!accessToken) {
+    throw new AppError("Authentication required", 401);
+  }
+
+  const payload = tokenService.verifyAccessToken(accessToken);
+  req.user = {
+    id: payload.sub,
+    email: payload.email,
+    username: payload.username
+  };
+  next();
+};
