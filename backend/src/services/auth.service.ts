@@ -1,50 +1,22 @@
+/** Auth domain: signup/verify/login, refresh + reuse, Google, forgot/change password. */
 import bcrypt from "bcrypt";
 import { Op } from "sequelize";
+import { googleOAuthClient } from "../clients/google-oauth.client";
+import { BCRYPT_SALT_ROUNDS } from "../constants/auth.constants";
 import { User } from "../models/user.model";
+import type { AuthResponse } from "../types/auth.types";
 import { AppError } from "../utils/AppError";
+import { buildAuthResponse } from "../utils/buildAuthSession";
 import { generateTempPassword } from "../utils/generateTempPassword";
+import { generateUniqueUsername } from "../utils/username.util";
 import { mailService } from "./mail.service";
 import { tokenService } from "./token.service";
 
-const SALT_ROUNDS = 12;
-
-type AuthResponse = {
-  accessToken: string;
-  refreshToken: string;
-  expiresIn: number;
-  user: {
-    id: string;
-    username: string;
-    email: string;
-    requiresPasswordChange: boolean;
-    isEmailVerified: boolean;
-  };
-};
-
-const buildAuthResponse = (user: User): AuthResponse => {
-  const payload = {
-    sub: user.id,
-    email: user.email,
-    username: user.username
-  };
-  const accessToken = tokenService.signAccessToken(payload);
-  const refreshToken = tokenService.signRefreshToken(payload);
-
-  return {
-    accessToken,
-    refreshToken,
-    expiresIn: tokenService.getAccessExpirySeconds(),
-    user: {
-      id: user.id,
-      username: user.username,
-      email: user.email,
-      requiresPasswordChange: user.requiresPasswordChange,
-      isEmailVerified: user.isEmailVerified
-    }
-  };
-};
-
 export const authService = {
+  getGoogleAuthorizationUrl(): string {
+    return googleOAuthClient.getAuthorizationUrl();
+  },
+
   async signup(input: { username: string; email: string; password: string }): Promise<void> {
     const duplicatedUser = await User.findOne({
       where: {
@@ -56,7 +28,7 @@ export const authService = {
       throw new AppError("Email or username already in use", 409);
     }
 
-    const passwordHash = await bcrypt.hash(input.password, SALT_ROUNDS);
+    const passwordHash = await bcrypt.hash(input.password, BCRYPT_SALT_ROUNDS);
     const user = await User.create({
       username: input.username,
       email: input.email,
@@ -77,10 +49,35 @@ export const authService = {
   },
 
   async verifyEmail(token: string): Promise<void> {
-    const payload = tokenService.verifyEmailVerificationToken(token);
+    let payload;
+    try {
+      payload = tokenService.verifyEmailVerificationToken(token);
+    } catch (error) {
+      if (error instanceof AppError && error.code === "TOKEN_EXPIRED") {
+        throw new AppError("Verification link expired", 400, "VERIFICATION_TOKEN_EXPIRED");
+      }
+      throw error;
+    }
+
     const user = await User.findByPk(payload.sub);
-    if (!user || user.emailVerificationToken !== token) {
-      throw new AppError("Invalid verification token", 400);
+    if (!user) {
+      throw new AppError("User not found for this verification token", 404, "VERIFICATION_USER_NOT_FOUND");
+    }
+
+    if (user.isEmailVerified) {
+      throw new AppError("Email is already verified", 409, "EMAIL_ALREADY_VERIFIED");
+    }
+
+    if (!user.emailVerificationToken) {
+      throw new AppError(
+        "No active verification token for this account",
+        400,
+        "VERIFICATION_TOKEN_NOT_ACTIVE"
+      );
+    }
+
+    if (user.emailVerificationToken !== token) {
+      throw new AppError("Verification token mismatch", 400, "VERIFICATION_TOKEN_MISMATCH");
     }
 
     user.isEmailVerified = true;
@@ -109,7 +106,7 @@ export const authService = {
     }
 
     const authData = buildAuthResponse(user);
-    user.refreshTokenHash = await bcrypt.hash(authData.refreshToken, SALT_ROUNDS);
+    user.refreshTokenHash = await bcrypt.hash(authData.refreshToken, BCRYPT_SALT_ROUNDS);
     await user.save();
 
     return authData;
@@ -123,6 +120,7 @@ export const authService = {
     }
 
     const isCurrentToken = await bcrypt.compare(refreshToken, user.refreshTokenHash);
+    // Refresh token cũ sau khi đã rotate → có thể bị reuse → huỷ session.
     if (!isCurrentToken) {
       user.refreshTokenHash = null;
       await user.save();
@@ -130,7 +128,7 @@ export const authService = {
     }
 
     const authData = buildAuthResponse(user);
-    user.refreshTokenHash = await bcrypt.hash(authData.refreshToken, SALT_ROUNDS);
+    user.refreshTokenHash = await bcrypt.hash(authData.refreshToken, BCRYPT_SALT_ROUNDS);
     await user.save();
 
     return authData;
@@ -147,12 +145,13 @@ export const authService = {
 
   async forgotPassword(email: string): Promise<void> {
     const user = await User.findOne({ where: { email } });
+    // Không có user vẫn im lặng — tránh lộ email có tài khoản hay không.
     if (!user) {
       return;
     }
 
     const temporaryPassword = generateTempPassword(12);
-    user.passwordHash = await bcrypt.hash(temporaryPassword, SALT_ROUNDS);
+    user.passwordHash = await bcrypt.hash(temporaryPassword, BCRYPT_SALT_ROUNDS);
     user.requiresPasswordChange = true;
     await user.save();
 
@@ -165,9 +164,44 @@ export const authService = {
       throw new AppError("User not found", 404);
     }
 
-    user.passwordHash = await bcrypt.hash(newPassword, SALT_ROUNDS);
+    user.passwordHash = await bcrypt.hash(newPassword, BCRYPT_SALT_ROUNDS);
     user.requiresPasswordChange = false;
     user.refreshTokenHash = null;
     await user.save();
+  },
+
+  async loginWithGoogleCode(code: string): Promise<AuthResponse> {
+    const tokenPayload = await googleOAuthClient.exchangeCodeForTokens(code);
+    const googleProfile = await googleOAuthClient.fetchUserInfo(tokenPayload.access_token);
+
+    let user = await User.findOne({
+      where: {
+        [Op.or]: [{ googleId: googleProfile.sub }, { email: googleProfile.email.toLowerCase() }]
+      }
+    });
+
+    if (!user) {
+      const derivedName = googleProfile.name ?? googleProfile.email.split("@")[0];
+      const username = await generateUniqueUsername(derivedName);
+      user = await User.create({
+        username,
+        email: googleProfile.email.toLowerCase(),
+        googleId: googleProfile.sub,
+        isEmailVerified: googleProfile.email_verified,
+        requiresPasswordChange: false,
+        passwordHash: null
+      });
+    } else {
+      user.googleId = user.googleId ?? googleProfile.sub;
+      if (googleProfile.email_verified && !user.isEmailVerified) {
+        user.isEmailVerified = true;
+      }
+    }
+
+    const authData = buildAuthResponse(user);
+    user.refreshTokenHash = await bcrypt.hash(authData.refreshToken, BCRYPT_SALT_ROUNDS);
+    await user.save();
+
+    return authData;
   }
 };

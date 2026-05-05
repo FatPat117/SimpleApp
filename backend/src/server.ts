@@ -1,12 +1,16 @@
+/** Bootstrap: DB connect + run migrations/seed + listen PORT. */
 import { app } from "./app";
 import { sequelize } from "./config/database";
+import { runMigrations } from "./database/runMigrations";
+import { runSeeders } from "./database/runSeeders";
 import { env } from "./config/env";
 import "./models/user.model";
 
 const bootstrap = async (): Promise<void> => {
   try {
     await sequelize.authenticate();
-    await sequelize.sync();
+    await runMigrations();
+    await runSeeders();
 
     app.listen(env.PORT, () => {
       console.log(`Backend server is running on port ${env.PORT}`);

@@ -1,7 +1,9 @@
+/** HTTP /users/me: profile user đang login (không lộ password/hash). */
 import type { Request, Response } from "express";
 import { userService } from "../services/user.service";
-import { catchAsync } from "../utils/catchAsync";
 import { AppError } from "../utils/AppError";
+import { catchAsync } from "../utils/catchAsync";
+import { sendSuccess } from "../utils/response";
 import { updateMeSchema } from "../validations/user.validation";
 
 export const getMe = catchAsync(async (req: Request, res: Response) => {
@@ -14,7 +16,7 @@ export const getMe = catchAsync(async (req: Request, res: Response) => {
     throw new AppError("User not found", 404);
   }
 
-  res.status(200).json({
+  sendSuccess(res, 200, {
     user: {
       id: user.id,
       username: user.username,
@@ -32,7 +34,7 @@ export const updateMe = catchAsync(async (req: Request, res: Response) => {
 
   const payload = updateMeSchema.parse(req.body);
   const updatedUser = await userService.updateMe(req.user.id, payload);
-  res.status(200).json({
+  sendSuccess(res, 200, {
     user: {
       id: updatedUser.id,
       username: updatedUser.username,

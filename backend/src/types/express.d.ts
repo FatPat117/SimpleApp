@@ -1,3 +1,4 @@
+/** Bổ sung `req.user` sau middleware authenticate. */
 declare namespace Express {
   interface Request {
     user?: {

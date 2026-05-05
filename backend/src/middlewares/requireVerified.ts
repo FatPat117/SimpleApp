@@ -1,6 +1,7 @@
+/** Email đã verify (đọc DB). Sẵn middleware, gắn route khi cần. */
 import type { NextFunction, Request, Response } from "express";
-import { AppError } from "../utils/AppError";
 import { User } from "../models/user.model";
+import { AppError } from "../utils/AppError";
 
 export const requireVerified = async (req: Request, _res: Response, next: NextFunction): Promise<void> => {
   if (!req.user) {

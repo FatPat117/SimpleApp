@@ -1,3 +1,4 @@
+/** /users/me — luôn cần `authenticate` (access cookie). */
 import { Router } from "express";
 import { getMe, updateMe } from "../controllers/user.controller";
 import { authenticate } from "../middlewares/authenticate";
