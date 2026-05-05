@@ -1,10 +1,9 @@
-/** Bảng `users`: password local / Google, verify email, refresh hash, MK tạm. */
 import {
-    DataTypes,
-    Model,
-    type CreationOptional,
-    type InferAttributes,
-    type InferCreationAttributes
+  DataTypes,
+  Model,
+  type CreationOptional,
+  type InferAttributes,
+  type InferCreationAttributes
 } from "sequelize";
 import { sequelize } from "../config/database";
 

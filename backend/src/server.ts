@@ -5,12 +5,14 @@ import { runMigrations } from "./database/runMigrations";
 import { runSeeders } from "./database/runSeeders";
 import { env } from "./config/env";
 import "./models/user.model";
+import { mailQueueService } from "./services/mail-queue.service";
 
 const bootstrap = async (): Promise<void> => {
   try {
     await sequelize.authenticate();
     await runMigrations();
     await runSeeders();
+    await mailQueueService.startConsumer();
 
     app.listen(env.PORT, () => {
       console.log(`Backend server is running on port ${env.PORT}`);

@@ -1,10 +1,9 @@
-/** Client Google OAuth: build URL, đổi code→token, userinfo (không chứa business user). */
 import { env } from "../config/env";
 import {
-  GOOGLE_OAUTH_ACCOUNTS_URL,
-  GOOGLE_OAUTH_SCOPE,
-  GOOGLE_OAUTH_TOKEN_URL,
-  GOOGLE_OAUTH_USERINFO_URL
+    GOOGLE_OAUTH_ACCOUNTS_URL,
+    GOOGLE_OAUTH_SCOPE,
+    GOOGLE_OAUTH_TOKEN_URL,
+    GOOGLE_OAUTH_USERINFO_URL
 } from "../constants/auth.constants";
 import type { GoogleTokenResponse, GoogleUserInfoResponse } from "../types/auth.types";
 import { AppError } from "../utils/AppError";

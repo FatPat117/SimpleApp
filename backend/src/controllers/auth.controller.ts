@@ -1,4 +1,3 @@
-/** HTTP auth: validate → service → set cookie + `sendSuccess`. */
 import type { Request, Response } from "express";
 import { env } from "../config/env";
 import { authService } from "../services/auth.service";
@@ -7,6 +6,7 @@ import { AppError } from "../utils/AppError";
 import { catchAsync } from "../utils/catchAsync";
 import { sendSuccess } from "../utils/response";
 import {
+  checkSignUpAvailabilitySchema,
   changePasswordSchema,
   forgotPasswordSchema,
   googleCallbackSchema,
@@ -26,10 +26,16 @@ export const signup = catchAsync(async (req: Request, res: Response) => {
   );
 });
 
+export const checkSignUpAvailability = catchAsync(async (req: Request, res: Response) => {
+  const payload = checkSignUpAvailabilitySchema.parse(req.query);
+  const result = await authService.checkSignUpAvailability(payload);
+  sendSuccess(res, 200, result);
+});
+
 export const verifyEmail = catchAsync(async (req: Request, res: Response) => {
   const { token } = verifyEmailSchema.parse(req.query);
   await authService.verifyEmail(token);
-  sendSuccess(res, 200, null, "Email verified successfully");
+  res.redirect(`${env.FRONTEND_URL}/signin?verified=1`);
 });
 
 export const login = catchAsync(async (req: Request, res: Response) => {
@@ -81,8 +87,19 @@ export const googleAuth = catchAsync(async (_req: Request, res: Response) => {
 });
 
 export const googleCallback = catchAsync(async (req: Request, res: Response) => {
-  const { code } = googleCallbackSchema.parse(req.query);
-  const result = await authService.loginWithGoogleCode(code);
-  tokenService.setAuthCookies(res, result.accessToken, result.refreshToken);
-  res.redirect(`${env.FRONTEND_URL}/dashboard`);
+  const parsed = googleCallbackSchema.safeParse(req.query);
+  if (!parsed.success) {
+    res.redirect(`${env.FRONTEND_URL}/signin?reason=google-auth-failed`);
+    return;
+  }
+
+  try {
+    const { code } = parsed.data;
+    const result = await authService.loginWithGoogleCode(code);
+    tokenService.setAuthCookies(res, result.accessToken, result.refreshToken);
+    res.redirect(`${env.FRONTEND_URL}/dashboard`);
+  } catch {
+    tokenService.clearAuthCookies(res);
+    res.redirect(`${env.FRONTEND_URL}/signin?reason=google-auth-failed`);
+  }
 });

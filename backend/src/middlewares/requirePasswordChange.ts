@@ -1,7 +1,6 @@
-/** Bắt buộc user đã login và `requiresPasswordChange` trong DB (flow MK tạm). */
 import type { NextFunction, Request, Response } from "express";
-import { User } from "../models/user.model";
 import { AppError } from "../utils/AppError";
+import { User } from "../models/user.model";
 
 export const requirePasswordChange = async (
   req: Request,

@@ -1,4 +1,3 @@
-/** Đọc user theo id; cập nhật profile (username unique). */
 import { Op } from "sequelize";
 import { User } from "../models/user.model";
 import { AppError } from "../utils/AppError";
@@ -8,7 +7,7 @@ export const userService = {
     return User.findByPk(userId);
   },
 
-  async updateMe(userId: string, payload: { username?: string }): Promise<User> {
+  async updateMe(userId: string, payload: { username?: string; email?: string }): Promise<User> {
     const user = await User.findByPk(userId);
     if (!user) {
       throw new AppError("User not found", 404);
@@ -25,6 +24,20 @@ export const userService = {
         throw new AppError("Username already in use", 409);
       }
       user.username = payload.username;
+    }
+
+    if (payload.email && payload.email.toLowerCase() !== user.email) {
+      const normalizedEmail = payload.email.toLowerCase();
+      const emailExists = await User.findOne({
+        where: {
+          email: normalizedEmail,
+          id: { [Op.ne]: userId }
+        }
+      });
+      if (emailExists) {
+        throw new AppError("Email already in use", 409);
+      }
+      user.email = normalizedEmail;
     }
 
     await user.save();

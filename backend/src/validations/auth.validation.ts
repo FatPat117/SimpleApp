@@ -1,4 +1,3 @@
-/** Schema Zod cho body/query auth (password rule dùng chung signup + change). */
 import { z } from "zod";
 
 const passwordSchema = z
@@ -12,6 +11,15 @@ export const signUpSchema = z.object({
   email: z.string().trim().toLowerCase().email("Invalid email address"),
   password: passwordSchema
 });
+
+export const checkSignUpAvailabilitySchema = z
+  .object({
+    username: z.string().trim().min(3, "Username must be at least 3 characters").optional(),
+    email: z.string().trim().toLowerCase().email("Invalid email address").optional()
+  })
+  .refine((data) => Boolean(data.username || data.email), {
+    message: "Username or email is required"
+  });
 
 export const loginSchema = z.object({
   identifier: z.string().trim().min(1, "Identifier is required"),

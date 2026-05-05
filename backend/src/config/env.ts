@@ -19,6 +19,8 @@ const envSchema = z.object({
   SMTP_USER: z.string().min(1),
   SMTP_PASS: z.string().min(1),
   SMTP_FROM: z.string().email(),
+  RABBITMQ_URL: z.string().min(1).default("amqp://localhost:5672"),
+  RABBITMQ_MAIL_QUEUE: z.string().min(1).default("simpleapp.mail"),
   GOOGLE_CLIENT_ID: z.string().default(""),
   GOOGLE_CLIENT_SECRET: z.string().default(""),
   GOOGLE_REDIRECT_URI: z.string().url()

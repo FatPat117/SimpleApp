@@ -1,4 +1,3 @@
-/** Chuẩn hoá lỗi: Zod / AppError / 500 → JSON `{ success: false, error }`. */
 import type { NextFunction, Request, Response } from "express";
 import { ZodError } from "zod";
 import { env } from "../config/env";
