@@ -228,17 +228,17 @@ postgresql://neondb_owner:npg_RZ1szapqHkB7@ep-misty-bonus-aoicduq1-pooler.c-2.ap
 2. Build command: `npm install && npm run build`
 3. Start command: `npm run start`
 4. Environment Variables:
-   - `NODE_ENV=production`
-   - `PORT=4000`
-   - `DATABASE_URL=<Neon DATABASE_URL ở trên>`
-   - `FRONTEND_URL=https://simple-app-frontend.vercel.app`
-   - `JWT_ACCESS_SECRET=<secret mạnh riêng cho production>`
-   - `JWT_REFRESH_SECRET=<secret mạnh riêng cho production>`
-   - `JWT_ACCESS_EXPIRES_IN=15m`
-   - `JWT_REFRESH_EXPIRES_IN=7d`
-   - `GOOGLE_CLIENT_ID=<Google OAuth client id>`
-   - `GOOGLE_CLIENT_SECRET=<Google OAuth client secret>`
-   - `GOOGLE_REDIRECT_URI=https://simpleapp-backend-plub.onrender.com/api/auth/google/callback`
+      - `NODE_ENV=production`
+      - `PORT=4000`
+      - `DATABASE_URL=<Neon DATABASE_URL ở trên>`
+      - `FRONTEND_URL=https://simple-app-frontend.vercel.app`
+      - `JWT_ACCESS_SECRET=<secret mạnh riêng cho production>`
+      - `JWT_REFRESH_SECRET=<secret mạnh riêng cho production>`
+      - `JWT_ACCESS_EXPIRES_IN=15m`
+      - `JWT_REFRESH_EXPIRES_IN=7d`
+      - `GOOGLE_CLIENT_ID=<Google OAuth client id>`
+      - `GOOGLE_CLIENT_SECRET=<Google OAuth client secret>`
+      - `GOOGLE_REDIRECT_URI=https://simpleapp-backend-plub.onrender.com/api/auth/google/callback`
 
 ### Cấu hình Vercel (frontend)
 
@@ -247,17 +247,17 @@ postgresql://neondb_owner:npg_RZ1szapqHkB7@ep-misty-bonus-aoicduq1-pooler.c-2.ap
 3. Build command: `npm run build`
 4. Output directory: `dist`
 5. Environment Variables:
-   - `VITE_API_URL=https://simpleapp-backend-plub.onrender.com/api`
+      - `VITE_API_URL=https://simpleapp-backend-plub.onrender.com/api`
 
 ### Việc bắt buộc sau khi set env
 
 1. Trong Google Cloud Console, cập nhật OAuth:
-   - Authorized JavaScript origins:
-     - `https://simple-app-frontend.vercel.app`
-     - `https://simpleapp-backend-plub.onrender.com`
-   - Authorized redirect URIs:
-     - `https://simpleapp-backend-plub.onrender.com/api/auth/google/callback`
+      - Authorized JavaScript origins:
+           - `https://simple-app-frontend.vercel.app`
+           - `https://simpleapp-backend-plub.onrender.com`
+      - Authorized redirect URIs:
+           - `https://simpleapp-backend-plub.onrender.com/api/auth/google/callback`
 2. Re-deploy lại **cả backend và frontend** sau khi đổi env.
 3. Test nhanh sau deploy:
-   - `GET https://simpleapp-backend-plub.onrender.com/api/health`
-   - Truy cập frontend và kiểm tra signup/login/refresh/logout.
+      - `GET https://simpleapp-backend-plub.onrender.com/api/health`
+      - Truy cập frontend và kiểm tra signup/login/refresh/logout.

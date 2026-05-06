@@ -50,7 +50,7 @@ export function PasswordInput({ id, label, error, helper, wrapperClassName = "sp
         </button>
       </div>
       {helper}
-      {error && <p className="error min-h-4">{error}</p>}
+      {error && !helper && <p className="error min-h-4">{error}</p>}
     </div>
   );
 }
