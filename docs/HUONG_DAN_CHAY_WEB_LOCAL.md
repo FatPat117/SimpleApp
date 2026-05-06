@@ -172,31 +172,31 @@ Backend hiện có seed dữ liệu demo:
 
 ## 7) Ảnh màn hình hiện có
 
-Các ảnh đã được thêm từ thư mục `images`:
+Các ảnh nằm cạnh tài liệu trong thư mục `docs/images` (đường dẫn tương đối để Markdown Preview trong Cursor/VS Code hiển thị được).
 
 ## Đăng ký
 
-![Sign Up](file:///D:/Programming_Language/SimpleApp/images/SignUp.png)
+![Sign Up](./images/SignUp.png)
 
 ## Đăng nhập
 
-![Login](file:///D:/Programming_Language/SimpleApp/images/Login-page.png)
+![Login](./images/Login-page.png)
 
 ## Quên mật khẩu
 
-![Forgot Password](file:///D:/Programming_Language/SimpleApp/images/forgot-password.png)
+![Forgot Password](./images/forgot-password.png)
 
 ## Dashboard tổng quan
 
-![Dashboard](file:///D:/Programming_Language/SimpleApp/images/Dashboard.png)
+![Dashboard](./images/Dashboard.png)
 
 ## Dashboard - Thông tin cá nhân
 
-![Dashboard Me](file:///D:/Programming_Language/SimpleApp/images/Dashboard-me.png)
+![Dashboard Me](./images/Dashboard-me.png)
 
 ## Dashboard - Cài đặt
 
-![Dashboard Settings](file:///D:/Programming_Language/SimpleApp/images/Dashboard-setting.png)
+![Dashboard Settings](./images/Dashboard-setting.png)
 
 ## 8) Lệnh kiểm tra nhanh
 
