@@ -17,13 +17,8 @@ import {
 
 export const signup = catchAsync(async (req: Request, res: Response) => {
   const payload = signUpSchema.parse(req.body);
-  await authService.signup(payload);
-  sendSuccess(
-    res,
-    201,
-    { email: payload.email },
-    "Please check your email to verify your account before logging in."
-  );
+  const result = await authService.signup(payload);
+  sendSuccess(res, 201, result, "Account created. Please verify your account before logging in.");
 });
 
 export const checkSignUpAvailability = catchAsync(async (req: Request, res: Response) => {
@@ -35,7 +30,7 @@ export const checkSignUpAvailability = catchAsync(async (req: Request, res: Resp
 export const verifyEmail = catchAsync(async (req: Request, res: Response) => {
   const { token } = verifyEmailSchema.parse(req.query);
   await authService.verifyEmail(token);
-  res.redirect(`${env.FRONTEND_URL}/signin?verified=1`);
+  sendSuccess(res, 200, null, "Account verified successfully.");
 });
 
 export const login = catchAsync(async (req: Request, res: Response) => {
@@ -66,12 +61,14 @@ export const logout = catchAsync(async (req: Request, res: Response) => {
 
 export const forgotPassword = catchAsync(async (req: Request, res: Response) => {
   const { email } = forgotPasswordSchema.parse(req.body);
-  await authService.forgotPassword(email);
+  const result = await authService.forgotPassword(email);
   sendSuccess(
     res,
     200,
-    null,
-    "If an account exists for this email, a temporary password will be sent."
+    result,
+    result.temporaryPassword
+      ? "Temporary password generated successfully."
+      : "If an account exists for this email, a temporary password will be generated."
   );
 });
 

@@ -2,7 +2,6 @@ import bcrypt from "bcrypt";
 import { env } from "../config/env";
 import { User } from "../models/user.model";
 import { authService } from "../services/auth.service";
-import { mailService } from "../services/mail.service";
 import { tokenService } from "../services/token.service";
 
 const originalFetch = global.fetch;
@@ -13,7 +12,7 @@ describe("Auth service", () => {
     global.fetch = originalFetch;
   });
 
-  it("signup creates unverified user and sends verification email", async () => {
+  it("signup creates unverified user and returns verification token", async () => {
     const saveMock = jest.fn().mockResolvedValue(undefined);
     const createdUser = {
       id: "u-1",
@@ -26,9 +25,8 @@ describe("Auth service", () => {
     jest.spyOn(User, "findOne").mockResolvedValue(null);
     jest.spyOn(User, "create").mockResolvedValue(createdUser);
     jest.spyOn(tokenService, "signEmailVerificationToken").mockReturnValue("verify-token");
-    const sendEmailSpy = jest.spyOn(mailService, "sendVerificationEmail").mockResolvedValue(undefined);
 
-    await authService.signup({
+    const result = await authService.signup({
       username: "tester",
       email: "tester@example.com",
       password: "Password@123"
@@ -44,7 +42,10 @@ describe("Auth service", () => {
     );
     expect(createdUser.emailVerificationToken).toBe("verify-token");
     expect(saveMock).toHaveBeenCalledTimes(1);
-    expect(sendEmailSpy).toHaveBeenCalledWith("tester@example.com", "verify-token");
+    expect(result).toEqual({
+      email: "tester@example.com",
+      verificationToken: "verify-token"
+    });
   });
 
   it("signup fails when username or email already exists", async () => {
@@ -128,8 +129,9 @@ describe("Auth service", () => {
         password: "Password@123"
       })
     ).rejects.toMatchObject({
-      message: "Email not verified",
-      statusCode: 403
+      message: "User not verified",
+      statusCode: 403,
+      code: "EMAIL_NOT_VERIFIED"
     });
   });
 
@@ -289,7 +291,7 @@ describe("Auth service", () => {
     expect(saveMock).toHaveBeenCalledTimes(1);
   });
 
-  it("forgotPassword updates temporary password and marks password-change required", async () => {
+  it("forgotPassword returns temporary password and marks password-change required", async () => {
     const saveMock = jest.fn().mockResolvedValue(undefined);
     const existingUser = {
       id: "u-9",
@@ -300,31 +302,21 @@ describe("Auth service", () => {
     } as unknown as User;
 
     jest.spyOn(User, "findOne").mockResolvedValue(existingUser);
-    const sendTemporaryPasswordEmailSpy = jest
-      .spyOn(mailService, "sendTemporaryPasswordEmail")
-      .mockResolvedValue(undefined);
 
-    await authService.forgotPassword("tester@example.com");
+    const result = await authService.forgotPassword("tester@example.com");
 
     expect(existingUser.passwordHash).toBeTruthy();
     expect(existingUser.requiresPasswordChange).toBe(true);
     expect(saveMock).toHaveBeenCalledTimes(1);
-    expect(sendTemporaryPasswordEmailSpy).toHaveBeenCalledTimes(1);
-    expect(sendTemporaryPasswordEmailSpy).toHaveBeenCalledWith(
-      "tester@example.com",
-      expect.any(String)
-    );
+    expect(result.temporaryPassword).toEqual(expect.any(String));
   });
 
-  it("forgotPassword returns silently when email does not exist", async () => {
+  it("forgotPassword returns null temporary password when email does not exist", async () => {
     jest.spyOn(User, "findOne").mockResolvedValue(null);
-    const sendTemporaryPasswordEmailSpy = jest
-      .spyOn(mailService, "sendTemporaryPasswordEmail")
-      .mockResolvedValue(undefined);
 
-    await authService.forgotPassword("missing@example.com");
+    const result = await authService.forgotPassword("missing@example.com");
 
-    expect(sendTemporaryPasswordEmailSpy).not.toHaveBeenCalled();
+    expect(result).toEqual({ temporaryPassword: null });
   });
 
   it("changePassword updates password and clears password-change + refresh session flags", async () => {

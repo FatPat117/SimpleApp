@@ -19,6 +19,9 @@ export function useSignInPage() {
   const [apiError, setApiError] = useState("");
   const handledReasonRef = useRef<string | null>(null);
   const { pushToast } = useToast();
+  const reason = searchParams.get("reason");
+  const reasonErrorMessage =
+    reason === "google-auth-failed" ? "Google sign-in failed. Please try again." : "";
 
   const {
     register,
@@ -30,7 +33,6 @@ export function useSignInPage() {
   });
 
   useEffect(() => {
-    const reason = searchParams.get("reason");
     if (!reason || handledReasonRef.current === reason) {
       return;
     }
@@ -38,13 +40,13 @@ export function useSignInPage() {
     handledReasonRef.current = reason;
 
     if (reason === "google-auth-failed") {
-      setApiError("Google sign-in failed. Please try again.");
+      pushToast("Google sign-in failed. Please try again.", "error");
     }
 
     const nextSearchParams = new URLSearchParams(searchParams);
     nextSearchParams.delete("reason");
     setSearchParams(nextSearchParams, { replace: true });
-  }, [searchParams, setSearchParams]);
+  }, [pushToast, reason, searchParams, setSearchParams]);
 
   const onSubmit = async (values: SignInFormValues) => {
     try {
@@ -57,14 +59,33 @@ export function useSignInPage() {
       pushToast("Signed in successfully.", "success");
       navigate(response.user.requiresPasswordChange ? "/change-password" : "/dashboard", { replace: true });
     } catch (error) {
-      const axiosError = error as AxiosError<{ message?: string }>;
-      const message = axiosError.response?.data?.message;
+      const axiosError = error as AxiosError<{
+        error?: {
+          code?: string;
+          message?: string;
+          details?: { email?: string; verificationToken?: string };
+        };
+      }>;
+      const errorData = axiosError.response?.data?.error;
+
+      if (errorData?.code === "EMAIL_NOT_VERIFIED") {
+        setApiError("User has not verified this account yet.");
+        navigate("/verify-email", {
+          state: {
+            email: errorData.details?.email,
+            verificationToken: errorData.details?.verificationToken
+          }
+        });
+        return;
+      }
+
+      const message = errorData?.message;
       setApiError(message === "Invalid credentials" ? "Incorrect username or password." : (message ?? "Incorrect username or password."));
     }
   };
 
   return {
-    apiError,
+    apiError: apiError || reasonErrorMessage,
     isPending: login.isPending,
     submit: handleSubmit(onSubmit),
     form: {

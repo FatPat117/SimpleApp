@@ -7,7 +7,7 @@ import { setProfile } from "../features/user/userSlice";
 
 export function useAuthBootstrap() {
   const dispatch = useAppDispatch();
-  const authRoutes = new Set(["/signin", "/signup", "/forgot-password"]);
+  const authRoutes = new Set(["/signin", "/signup", "/forgot-password", "/verify-email"]);
   const pathname = window.location.pathname;
   const isAuthRoute = authRoutes.has(pathname);
   // Always bootstrap on protected routes, including OAuth callback landings,

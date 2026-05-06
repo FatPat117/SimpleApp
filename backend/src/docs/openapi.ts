@@ -133,7 +133,18 @@ export const openApiSpec = {
       SignUpResponseData: {
         type: "object",
         properties: {
-          email: { type: "string", format: "email" }
+          email: { type: "string", format: "email" },
+          verificationToken: { type: "string" }
+        }
+      },
+      ForgotPasswordResponseData: {
+        type: "object",
+        properties: {
+          temporaryPassword: {
+            type: "string",
+            nullable: true,
+            description: "Generated temporary password. Null when account is not found."
+          }
         }
       },
       MeResponseData: {
@@ -172,7 +183,7 @@ export const openApiSpec = {
         tags: ["Auth"],
         summary: "Register",
         description:
-          "Creates an unverified user, hashes password, sends verification email. **Cannot log in** until email is verified.",
+          "Creates an unverified user, hashes password, returns verification token. **Cannot log in** until account is verified.",
         requestBody: {
           required: true,
           content: {
@@ -183,7 +194,7 @@ export const openApiSpec = {
         },
         responses: {
           "201": {
-            description: "Created — check email",
+            description: "Created",
             content: {
               "application/json": {
                 schema: {
@@ -196,7 +207,7 @@ export const openApiSpec = {
                         message: {
                           type: "string",
                           example:
-                            "Please check your email to verify your account before logging in."
+                            "Account created. Please verify your account before logging in."
                         }
                       }
                     }
@@ -216,7 +227,7 @@ export const openApiSpec = {
         tags: ["Auth"],
         summary: "Verify email",
         description:
-          "Validates JWT sent by email (24h). Link in mail points here. Marks `isEmailVerified` and clears verification token.",
+          "Validates verification token and marks `isEmailVerified` true, then clears verification token.",
         parameters: [
           {
             name: "token",
@@ -228,7 +239,7 @@ export const openApiSpec = {
         ],
         responses: {
           "200": {
-            description: "Email verified",
+            description: "Account verified",
             content: {
               "application/json": {
                 schema: {
@@ -238,7 +249,7 @@ export const openApiSpec = {
                       type: "object",
                       properties: {
                         data: { nullable: true },
-                        message: { type: "string", example: "Email verified successfully" }
+                        message: { type: "string", example: "Account verified successfully." }
                       }
                     }
                   ]
@@ -358,7 +369,7 @@ export const openApiSpec = {
         tags: ["Auth"],
         summary: "Forgot password",
         description:
-          "If email exists: generates temporary password, sets `requiresPasswordChange`, sends email. Response is always generic (no email enumeration).",
+          "If email exists: generates temporary password and sets `requiresPasswordChange`. Temporary password is returned in response data.",
         requestBody: {
           required: true,
           content: {
@@ -369,7 +380,7 @@ export const openApiSpec = {
         },
         responses: {
           "200": {
-            description: "Request accepted",
+            description: "Temporary password generated (or null if account not found)",
             content: {
               "application/json": {
                 schema: {
@@ -378,10 +389,10 @@ export const openApiSpec = {
                     {
                       type: "object",
                       properties: {
-                        data: { nullable: true },
+                        data: { $ref: "#/components/schemas/ForgotPasswordResponseData" },
                         message: {
                           type: "string",
-                          example: "A temporary password has been sent to your email."
+                          example: "Temporary password generated successfully."
                         }
                       }
                     }

@@ -77,9 +77,12 @@ export function useSignUpPage() {
   const onSubmit = async (values: SignUpFormValues) => {
     try {
       clearErrors(["email", "username"]);
-      await signup.mutateAsync(values);
-      pushToast("Account created. Please verify your email before logging in.", "success");
-      navigate("/verify-email", { state: { email: values.email }, replace: true });
+      const response = await signup.mutateAsync(values);
+      pushToast("Account created. Please verify your account before logging in.", "success");
+      navigate("/verify-email", {
+        state: { email: response.email, verificationToken: response.verificationToken },
+        replace: true
+      });
       reset();
     } catch (error) {
       const axiosError = error as AxiosError<{ error?: { message?: string } }>;

@@ -1,6 +1,12 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { api } from "../../lib/axios";
-import type { LoginPayload, LoginResponse, SignUpPayload } from "./authTypes";
+import type {
+  ForgotPasswordResponse,
+  LoginPayload,
+  LoginResponse,
+  SignUpPayload,
+  SignupResponse
+} from "./authTypes";
 import type { UserProfile } from "../user/userTypes";
 
 type ApiSuccessResponse<T> = {
@@ -12,7 +18,7 @@ type ApiSuccessResponse<T> = {
 export const useSignup = () =>
   useMutation({
     mutationFn: async (payload: SignUpPayload) => {
-      const { data } = await api.post<ApiSuccessResponse<{ email: string }>>("/auth/signup", payload);
+      const { data } = await api.post<ApiSuccessResponse<SignupResponse>>("/auth/signup", payload);
       return data.data;
     },
   });
@@ -36,8 +42,15 @@ export const useLogin = () =>
 export const useForgotPassword = () =>
   useMutation({
     mutationFn: async (email: string) => {
-      const { data } = await api.post<ApiSuccessResponse<null>>("/auth/forgot-password", { email });
-      return data;
+      const { data } = await api.post<ApiSuccessResponse<ForgotPasswordResponse>>("/auth/forgot-password", { email });
+      return data.data;
+    },
+  });
+
+export const useVerifyEmail = () =>
+  useMutation({
+    mutationFn: async (token: string) => {
+      await api.get("/auth/verify-email", { params: { token } });
     },
   });
 

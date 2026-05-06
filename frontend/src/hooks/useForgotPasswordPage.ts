@@ -1,4 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "../components/shared/ToastProvider";
@@ -9,6 +10,7 @@ export function useForgotPasswordPage() {
   const forgotPassword = useForgotPassword();
   const navigate = useNavigate();
   const { pushToast } = useToast();
+  const [temporaryPassword, setTemporaryPassword] = useState<string | null>(null);
   const {
     register,
     handleSubmit,
@@ -19,13 +21,28 @@ export function useForgotPasswordPage() {
   });
 
   const onSubmit = async (values: ForgotPasswordFormValues) => {
-    await forgotPassword.mutateAsync(values.email);
-    pushToast("If this email exists, a temporary password will be sent.", "success");
-    navigate("/signin", { replace: true });
+    const response = await forgotPassword.mutateAsync(values.email);
+    setTemporaryPassword(response.temporaryPassword);
+    if (!response.temporaryPassword) {
+      pushToast("Email not found.", "error");
+      return;
+    }
+    pushToast("Temporary password is ready. Copy it and sign in again.", "success");
+  };
+
+  const onCopyTemporaryPassword = async () => {
+    if (!temporaryPassword) {
+      return;
+    }
+    await navigator.clipboard.writeText(temporaryPassword);
+    pushToast("Temporary password copied.", "success");
   };
 
   return {
+    temporaryPassword,
     isPending: forgotPassword.isPending,
+    onCopyTemporaryPassword,
+    goToSignIn: () => navigate("/signin"),
     submit: handleSubmit(onSubmit),
     form: {
       register,

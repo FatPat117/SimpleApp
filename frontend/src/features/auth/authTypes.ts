@@ -27,7 +27,15 @@ export interface SignUpPayload {
 }
 
 export interface LoginResponse {
-  message: string;
   expiresIn: number;
   user: UserProfile;
+}
+
+export interface SignupResponse {
+  email: string;
+  verificationToken: string;
+}
+
+export interface ForgotPasswordResponse {
+  temporaryPassword: string | null;
 }

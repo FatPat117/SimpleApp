@@ -8,8 +8,6 @@ import { AppError } from "../utils/AppError";
 import { buildAuthResponse } from "../utils/buildAuthSession";
 import { generateTempPassword } from "../utils/generateTempPassword";
 import { generateUniqueUsername } from "../utils/username.util";
-import { mailQueueService } from "./mail-queue.service";
-import { mailService } from "./mail.service";
 import { tokenService } from "./token.service";
 
 export const authService = {
@@ -17,7 +15,11 @@ export const authService = {
     return googleOAuthClient.getAuthorizationUrl();
   },
 
-  async signup(input: { username: string; email: string; password: string }): Promise<void> {
+  async signup(input: {
+    username: string;
+    email: string;
+    password: string;
+  }): Promise<{ email: string; verificationToken: string }> {
     const duplicatedUser = await User.findOne({
       where: {
         [Op.or]: [{ email: input.email }, { username: input.username }]
@@ -45,10 +47,10 @@ export const authService = {
     user.emailVerificationToken = verificationToken;
     await user.save();
 
-    const enqueued = await mailQueueService.enqueueVerificationEmail(user.email, verificationToken);
-    if (!enqueued) {
-      await mailService.sendVerificationEmail(user.email, verificationToken);
-    }
+    return {
+      email: user.email,
+      verificationToken
+    };
   },
 
   async checkSignUpAvailability(input: {
@@ -100,7 +102,18 @@ export const authService = {
     }
 
     if (!user.isEmailVerified) {
-      throw new AppError("Email not verified", 403);
+      if (!user.emailVerificationToken) {
+        user.emailVerificationToken = tokenService.signEmailVerificationToken({
+          sub: user.id,
+          email: user.email,
+          username: user.username
+        });
+        await user.save();
+      }
+      throw new AppError("User not verified", 403, "EMAIL_NOT_VERIFIED", {
+        email: user.email,
+        verificationToken: user.emailVerificationToken
+      });
     }
 
     const authData = buildAuthResponse(user);
@@ -140,10 +153,10 @@ export const authService = {
     await user.save();
   },
 
-  async forgotPassword(email: string): Promise<void> {
+  async forgotPassword(email: string): Promise<{ temporaryPassword: string | null }> {
     const user = await User.findOne({ where: { email } });
     if (!user) {
-      return;
+      return { temporaryPassword: null };
     }
 
     const temporaryPassword = generateTempPassword(12);
@@ -151,13 +164,7 @@ export const authService = {
     user.requiresPasswordChange = true;
     await user.save();
 
-    const enqueued = await mailQueueService.enqueueTemporaryPasswordEmail(
-      user.email,
-      temporaryPassword
-    );
-    if (!enqueued) {
-      await mailService.sendTemporaryPasswordEmail(user.email, temporaryPassword);
-    }
+    return { temporaryPassword };
   },
 
   async changePassword(userId: string, newPassword: string): Promise<void> {
